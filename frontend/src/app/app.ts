@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { MessageService } from 'primeng/api';
 import { ApiService, Ticket, Usuario } from './services/api.service';
 
@@ -32,7 +31,6 @@ export class App implements OnInit {
 
   // Detalle
   ticket: Ticket | null = null;
-  descripcionHtml: SafeHtml = '';
 
   // Admin
   usuarios: Usuario[] = [];
@@ -41,8 +39,7 @@ export class App implements OnInit {
 
   constructor(
     public api: ApiService,
-    private messages: MessageService,
-    private sanitizer: DomSanitizer
+    private messages: MessageService
   ) {}
 
   ngOnInit(): void {
@@ -78,6 +75,7 @@ export class App implements OnInit {
     this.api.registro(this.username, this.email, this.password).subscribe({
       next: () => {
         this.cargando = false;
+        this.password = '';
         this.modoRegistro = false;
         this.ok('Usuario creado. Ahora inicie sesión.');
       },
@@ -137,7 +135,6 @@ export class App implements OnInit {
     this.api.verTicket(id).subscribe({
       next: (t) => {
         this.ticket = t;
-        this.descripcionHtml = this.sanitizer.bypassSecurityTrustHtml(t.descripcion);
         this.vista = 'detalle';
       },
       error: () => this.error('Ticket no encontrado'),

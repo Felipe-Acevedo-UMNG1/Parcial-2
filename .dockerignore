@@ -1,0 +1,13 @@
+.git
+**/.env
+**/.env.*
+**/secrets
+**/node_modules
+**/dist
+**/.angular
+**/__pycache__
+**/.pytest_cache
+**/venv
+**/*.log
+docs
+project_sources

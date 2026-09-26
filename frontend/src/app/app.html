@@ -45,7 +45,7 @@
         <div class="flex flex-column gap-3">
           <input pInputText [(ngModel)]="nuevoTitulo" placeholder="Título" />
           <textarea pInputText rows="4" [(ngModel)]="nuevaDescripcion"
-                    placeholder="Describa el problema (admite formato HTML)"></textarea>
+                    placeholder="Describa el problema"></textarea>
           <div class="flex gap-2 align-items-center">
             <span class="text-600">Prioridad:</span>
             <p-button *ngFor="let p of prioridades" [label]="p" size="small"
@@ -92,7 +92,7 @@
         <p-tag [value]="ticket.estado" severity="secondary" />
         <span class="text-500 text-sm">Creado: {{ ticket.creado_en }}</span>
       </div>
-      <div class="p-3 border-round surface-50 mb-3" [innerHTML]="descripcionHtml"></div>
+      <div class="p-3 border-round surface-50 mb-3 descripcion">{{ ticket.descripcion }}</div>
       <div class="flex gap-2 align-items-center">
         <span class="text-600">Cambiar estado:</span>
         <p-button *ngFor="let e of estados" [label]="e" size="small" [outlined]="ticket.estado !== e"
@@ -108,7 +108,7 @@
         <thead>
           <tr class="text-left text-600">
             <th class="p-2">ID</th><th class="p-2">Usuario</th><th class="p-2">Correo</th>
-            <th class="p-2">Rol</th><th class="p-2">Hash</th>
+            <th class="p-2">Rol</th>
           </tr>
         </thead>
         <tbody>
@@ -117,7 +117,6 @@
             <td class="p-2">{{ u.username }}</td>
             <td class="p-2">{{ u.email }}</td>
             <td class="p-2"><p-tag [value]="u.rol" /></td>
-            <td class="p-2 font-mono text-sm">{{ u.password_hash }}</td>
           </tr>
         </tbody>
       </table>

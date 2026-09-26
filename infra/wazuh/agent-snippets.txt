@@ -1,0 +1,10 @@
+<!-- Integrar dentro de <syscheck> del ossec.conf de cada agente Linux. -->
+<directories realtime="yes">/opt/examen</directories>
+<!-- En sg-db: /etc/mysql/mysql.conf.d/mesa-ayuda.cnf;
+     sg-backend: ruta real de .env y docker-compose.yml;
+     sg-frontend: archivo de configuración Nginx montado/instalado. -->
+<!-- Integrar dentro de <ossec_config> del agente sg-backend: -->
+<localfile>
+  <log_format>syslog</log_format>
+  <location>/var/log/mesa_ayuda/app.log</location>
+</localfile>

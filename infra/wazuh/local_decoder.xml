@@ -1,0 +1,6 @@
+<!-- Copiar en el servidor Wazuh a /var/ossec/etc/decoders/local_decoder.xml -->
+<decoder name="mesa-ayuda-auth">
+  <prematch type="pcre2">AUTH_FAILED source_ip=</prematch>
+  <regex type="pcre2" offset="after_prematch">([0-9A-Fa-f:.]+) username=([A-Za-z0-9_.-]+)</regex>
+  <order>srcip,user</order>
+</decoder>

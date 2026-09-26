@@ -1,0 +1,23 @@
+// Plantilla: reemplazar <...> con la identidad de la tailnet y los puertos del grupo.
+// Eliminar la regla por defecto de acceso general antes de activar esta política.
+{
+  "groups": {
+    "group:admins": ["<CORREO_TAILSCALE_DEL_INTEGRANTE_1>"]
+  },
+  "tagOwners": {
+    "tag:db": ["group:admins"],
+    "tag:backend": ["group:admins"],
+    "tag:frontend": ["group:admins"],
+    "tag:security": ["group:admins"]
+  },
+  "grants": [
+    {"src": ["tag:frontend"], "dst": ["tag:backend"], "ip": ["tcp:<PUERTO_API>"]},
+    {"src": ["tag:backend"], "dst": ["tag:db"], "ip": ["tcp:<PUERTO_MYSQL>"]},
+    {"src": ["tag:db", "tag:backend", "tag:frontend", "group:admins"],
+     "dst": ["tag:security"], "ip": ["tcp:1514", "tcp:1515"]},
+    {"src": ["group:admins"], "dst": ["tag:db", "tag:backend", "tag:frontend", "tag:security"],
+     "ip": ["tcp:22"]},
+    {"src": ["group:admins"], "dst": ["tag:security"], "ip": ["tcp:443", "tcp:9000"]},
+    {"src": ["group:admins"], "dst": ["tag:backend"], "ip": ["tcp:<PUERTO_API>"]}
+  ]
+}

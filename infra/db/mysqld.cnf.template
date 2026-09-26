@@ -1,0 +1,12 @@
+# Copiar a /etc/mysql/mysql.conf.d/mesa-ayuda.cnf (MySQL 8 en Ubuntu).
+# Instalar CA/certificados con permisos de lectura para mysqld; nombres/SAN
+# deben corresponder con DB_HOST para que el backend verifique el servidor.
+[mysqld]
+bind-address = <IP_TAILSCALE_DB>
+port = <PUERTO_MYSQL_ASIGNADO>
+require_secure_transport = ON
+ssl-ca = /etc/mysql/tls/ca.pem
+ssl-cert = /etc/mysql/tls/server-cert.pem
+ssl-key = /etc/mysql/tls/server-key.pem
+log_error = /var/log/mysql/error.log
+general_log = OFF

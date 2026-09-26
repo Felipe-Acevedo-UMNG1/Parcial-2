@@ -1,81 +1,25 @@
-# 🎫 Mesa de Ayuda — Backend (FastAPI + MySQL)
+# API FastAPI
 
-API REST de una mesa de ayuda: registro e inicio de sesión con JWT, creación y consulta de tickets, y un módulo de administración. Base para el **Examen Aplicado — Segundo Corte 2026-II** de Seguridad Informática (UMNG).
+La base se conserva en la rama `v-base`; las correcciones están en `acevedo`.
+Guía completa: [../INSTRUCCIONES_PARCIAL_2.txt](../INSTRUCCIONES_PARCIAL_2.txt).
 
-> Este código fue generado con asistentes de IA y se entrega **tal como salió**. Parte de su trabajo es auditarlo.
+1. Ejecutar `infra/db/mesa_ayuda.sql` con administrador local. El usuario
+   `app_mesa` recibe solo SELECT, INSERT, UPDATE y DELETE sobre esa base.
+2. Crear un certificado MySQL de servidor con CA propia y SAN que coincida
+   con `DB_HOST`; copiar la CA pública a `secrets/db-ca.pem` en este directorio.
+3. Copiar `.env.example` a `.env` y rellenar los datos reales del grupo.
+   `JWT_SECRET` se puede generar con `openssl rand -hex 32`.
+4. En el host del backend: `sudo install -d -o 10001 -g 10001 -m 0750
+   /var/log/mesa_ayuda`. Después ejecutar `docker compose up -d --build`.
+5. Verificar `/health`, una conexión permitida y otra bloqueada desde la
+   tailnet. El puerto Docker se enlaza a la IP Tailscale; proteger también
+   DOCKER-USER de acuerdo con el firewall del host.
 
----
+El contenedor no crea tablas: iniciar `app_mesa` con privilegios DML es
+incompatible con crear esquemas en cada arranque. Los usuarios antiguos cuyo
+hash sea MD5 deberán cambiar su contraseña para poder acceder.
 
-## 📋 Requisitos
-
-- Python 3.12+
-- MySQL 8 / MariaDB 10.11+ accesible por red (en el examen: nodo `sg-db`, instalado **sin Docker**)
-- Docker (para el despliegue en `sg-backend`)
-
-## ⚙️ Variables de entorno
-
-| Variable | Descripción | Ejemplo |
-|---|---|---|
-| `DB_HOST` | Host de MySQL | IP Tailscale de `sg-db` |
-| `DB_PORT` | Puerto de MySQL | `3306` |
-| `DB_NAME` | Base de datos | `mesa_ayuda` |
-| `DB_USER` / `DB_PASSWORD` | Credenciales | — |
-| `JWT_SECRET` | Clave para firmar tokens | — |
-| `GRUPO_CODIGO` | Código asignado a su grupo | `G07-XXXX` |
-| `APP_PORT` | Puerto de la API | el asignado a su grupo |
-
-## ▶️ Ejecución local
-
-```bash
-python -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-export DB_HOST=localhost DB_PASSWORD=... GRUPO_CODIGO=...
-uvicorn app.main:app --reload --port 8000
-```
-
-Las tablas se crean automáticamente al arrancar.
-
-## 🐳 Docker
-
-```bash
-# Ajuste .env con los valores de su grupo
-docker compose up -d --build
-docker compose logs -f
-```
-
-## 🔗 Endpoints
-
-| Método | Ruta | Descripción |
-|---|---|---|
-| GET | `/health` | Estado y código del grupo |
-| POST | `/auth/registro` | Crear usuario |
-| POST | `/auth/login` | Obtener token JWT |
-| GET | `/tickets` | Mis tickets |
-| GET | `/tickets/buscar?q=` | Buscar en mis tickets |
-| GET | `/tickets/{id}` | Ver ticket |
-| POST | `/tickets` | Crear ticket |
-| PATCH | `/tickets/{id}/estado` | Cambiar estado |
-| GET | `/admin/usuarios` | Listado de usuarios (solo admin) |
-| GET | `/docs` | Swagger UI |
-
-Para crear un administrador:
-
-```sql
-UPDATE usuarios SET rol = 'admin' WHERE username = 'su_usuario';
-```
-
-## 📁 Estructura
-
-```
-mesa_ayuda_backend/
-├── app/
-│   ├── main.py        # Rutas
-│   ├── security.py    # Hash de contraseñas y JWT
-│   ├── database.py    # Conexión MySQL y creación de tablas
-│   ├── schemas.py     # Modelos Pydantic
-│   └── config.py      # Configuración por variables de entorno
-├── requirements.txt
-├── Dockerfile
-├── docker-compose.yml
-└── .env
-```
+Pruebas locales: `pip install -r requirements.txt httpx pytest` y
+`pytest -q` (sin MySQL ni VMs). El token se emite por 30 minutos y requiere
+JWT_SECRET de al menos 32 caracteres. La API no habilita CORS: el frontend
+usa el mismo origen mediante `/api`.

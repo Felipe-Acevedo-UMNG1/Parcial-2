@@ -1,26 +1,33 @@
-import hashlib
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 import jwt
+from argon2 import PasswordHasher
+from argon2.exceptions import InvalidHashError, VerifyMismatchError
 from fastapi import Header, HTTPException
 
 from app import config
+from app.database import fetch_one
+
+password_hasher = PasswordHasher()
 
 
 def hash_password(password: str) -> str:
-    return hashlib.md5(password.encode()).hexdigest()
+    return password_hasher.hash(password)
 
 
 def verify_password(password: str, password_hash: str) -> bool:
-    return hash_password(password) == password_hash
+    try:
+        return password_hasher.verify(password_hash, password)
+    except (InvalidHashError, VerifyMismatchError):
+        return False
 
 
 def crear_token(usuario: dict) -> str:
+    now = datetime.now(timezone.utc)
     payload = {
         "sub": str(usuario["id"]),
-        "username": usuario["username"],
-        "rol": usuario["rol"],
-        "iat": int(datetime.utcnow().timestamp()),
+        "iat": now,
+        "exp": now + timedelta(minutes=30),
     }
     return jwt.encode(payload, config.JWT_SECRET, algorithm=config.JWT_ALGORITHM)
 
@@ -33,13 +40,15 @@ def usuario_actual(authorization: str = Header(default="")) -> dict:
         payload = jwt.decode(
             token,
             config.JWT_SECRET,
-            algorithms=["HS256"],
-            options={"verify_signature": False},
+            algorithms=[config.JWT_ALGORITHM],
+            options={"require": ["sub", "iat", "exp"]},
         )
-    except jwt.PyJWTError:
-        raise HTTPException(status_code=401, detail="Token inválido")
-    return {
-        "id": int(payload["sub"]),
-        "username": payload.get("username"),
-        "rol": payload.get("rol", "usuario"),
-    }
+        user_id = int(payload["sub"])
+        if user_id <= 0:
+            raise ValueError("Identificador inválido")
+    except (jwt.PyJWTError, ValueError, TypeError, KeyError) as exc:
+        raise HTTPException(status_code=401, detail="Token inválido") from exc
+    user = fetch_one("SELECT id, username, rol FROM usuarios WHERE id = %s", (user_id,))
+    if not user:
+        raise HTTPException(status_code=401, detail="Usuario inválido")
+    return user

@@ -2,6 +2,16 @@ services:
   backend:
     build: .
     env_file: .env
+    environment:
+      APP_LOG_FILE: /var/log/mesa_ayuda/app.log
+      DB_SSL_CA: /run/secrets/db-ca.pem
     ports:
-      - "${APP_PORT:-8000}:${APP_PORT:-8000}"
+      - "${TAILSCALE_BACKEND_IP:?Configurar IP Tailscale}:${APP_PORT:?Configurar puerto API}:${APP_PORT}"
+    volumes:
+      - ./secrets/db-ca.pem:/run/secrets/db-ca.pem:ro
+      - /var/log/mesa_ayuda:/var/log/mesa_ayuda
+    read_only: true
+    tmpfs: /tmp
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
     restart: unless-stopped

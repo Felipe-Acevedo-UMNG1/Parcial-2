@@ -1,4 +1,5 @@
 fastapi
 uvicorn
 pymysql
+argon2-cffi
 pyjwt

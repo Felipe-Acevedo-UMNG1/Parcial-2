@@ -1,0 +1,124 @@
+PARCIAL 2 — MESA DE AYUDA | Guía y estado del repositorio
+Fecha: 2026-09-26
+Repositorio: https://github.com/Felipe-Acevedo-UMNG1/Parcial-2
+
+QUÉ EXIGE EL PARCIAL (100 puntos)
+1. Cuatro VMs Linux: sg-<apellido>-db, -backend, -frontend y -security;
+   PCs del equipo y nodos unidos por Tailscale, ACL y UFW (15).
+2. MySQL nativo en sg-db, TLS, usuario app_mesa de mínimo privilegio,
+   logs y respaldo cifrado con restauración probada (10).
+3. FastAPI en Docker en sg-backend por la IP Tailscale y puerto asignado (10).
+4. Angular/Nginx en sg-frontend con /api, cabeceras y Cloudflare Tunnel HTTPS (15).
+5. Wazuh, todos los agentes, tres detecciones y SonarQube para dos proyectos (20).
+6. Explicar, corregir y verificar siete fallas o más; cuatro obligatorias:
+   SQLi login, firma JWT, ticket ajeno y XSS; comparar SAST/DAST (30).
+También: informe IEEE y video de hasta 20 min, ambos entregados en Moodle.
+Los bonos son opcionales: dos nodos en nube (+5) y WireGuard manual (+5).
+
+ESTADO REAL DE ESTE TRABAJO
+- Base del docente importada en backend/ y frontend/. El HTML cita un usuario
+  GitHub que devuelve 404; los proyectos públicos con el contenido descrito
+  están en https://github.com/andressalamancaumng/. ORIGEN_BASE.txt documenta
+  el origen y las dos excepciones por secretos.
+- Referencia v-base apunta al código importado; en GitHub es una RAMA, no una
+  etiqueta Git. Crear la etiqueta v-base sobre ese commit para cumplir la rúbrica.
+- Rama acevedo contiene las correcciones; cuando estén definidos todos los
+  integrantes, usar una rama con todos sus apellidos paternos unidos por '_'.
+- Las correcciones y plantillas NO equivalen a infraestructura desplegada ni a
+  capturas reales. No se han ejecutado Wazuh, SonarQube, Bearer ni ZAP aquí.
+- Faltan código de grupo, dos puertos, apellido(s), cuentas de Tailscale y
+  Cloudflare, cuatro VMs y equipos del grupo. No se inventaron esos valores.
+
+CAMBIOS DE SEGURIDAD YA HECHOS
+- Consultas de login y búsqueda parametrizadas; el token verifica su firma,
+  caduca a los 30 min y el rol actual se consulta en la base de datos.
+- Argon2 sustituye MD5 en cuentas nuevas. Contraseñas heredadas con MD5
+  necesitan restablecimiento; no se aceptan sus hashes inseguros en login.
+- Lectura y cambio de estado exigen propietario; el listado admin no revela hash.
+- Se quitó /debug/config, CORS comodín, registros de contraseñas y tokens en
+  consola. Los eventos de login fallido sí registran IP validada y usuario.
+- La descripción se muestra como texto de Angular; JWT solo reside en memoria;
+  el navegador llama a /api. Un refresco de página requiere iniciar sesión otra vez.
+- Nginx limita login, cabeceras, directorios y cuerpo de peticiones. El frontend
+  se publica en 127.0.0.1:8080 del nodo para que cloudflared lo alcance.
+- Backend Docker usa usuario no root; se enlaza solo a la IP Tailscale. MySQL
+  TLS verifica el certificado; las tablas se preparan con un administrador
+  ANTES de iniciar el backend (app_mesa no tiene CREATE).
+- El registro del contenedor se monta en /var/log/mesa_ayuda/app.log del host
+  para que el agente Wazuh lo lea. Regla 100121: cinco fallos/60 s por IP.
+
+PASO A PASO PARA TERMINAR EL PARCIAL
+0. Completar parámetros auténticos del docente y acordar responsables. Elegir
+   el PC con >=8 GB libres para sg-security. Confirmar fecha en clase.
+1. Crear las cuatro VMs Ubuntu 24.04 (sg-security 8 GB) y poner hostnames del
+   grupo. Crear administrador no root, SSH por llave, actualizaciones automáticas.
+   En cada una: sudo install -d -m 755 /opt/examen; guardar código real en
+   /opt/examen/grupo.txt. Guardar capturas con hostname/código visible.
+2. Instalar Tailscale en VMs y PCs, unirlos a una sola tailnet con claves de
+   un solo uso, etiquetar los servidores. Reemplazar <...> y añadir todos los
+   miembros en infra/tailscale-acl.hujson; validar en panel Tailscale y aplicar.
+   Activar UFW deny incoming, abrir SOLO por tailscale0 los flujos del HTML:
+   frontend->backend API, backend->db MySQL, agentes->security 1514/1515,
+   PCs->VMs 22, PCs->security 443/9000, PCs->backend API para pruebas.
+   Probar un flujo permitido Y otro bloqueado. Antes de activar UFW, asegurar
+   SSH por tailnet para no cortar la administración.
+3. En sg-db: instalar MySQL 8 nativo y aplicar los valores reales a
+   infra/db/mysqld.cnf.template. Crear CA y certificado TLS con SAN que
+   coincida con DB_HOST. Configurar arranque de MySQL después de que tailscale0
+   obtenga IP. Ejecutar infra/db/mesa_ayuda.sql con administrador LOCAL;
+   ejecutar copia privada de infra/db/grants.mysql.template.sql con credencial
+   nueva. No usar root remoto ni publicar la copia con credenciales. Aplicar
+   respaldo diario age con infra/db/backup.sh y probar restauración temporal.
+4. En sg-backend: copiar backend/.env.example a backend/.env PRIVADO; rellenar
+   IPs, puertos, grupo, contraseña y JWT_SECRET (openssl rand -hex 32).
+   Guardar CA pública del servidor de DB en backend/secrets/db-ca.pem y crear
+   en el HOST sudo install -d -o 10001 -g 10001 -m 0750 /var/log/mesa_ayuda.
+   Desde backend/: docker compose up -d --build. Permitir puerto API solo desde
+   el frontend y PCs autorizados por tailnet; comprobar restricciones Docker/
+   UFW en DOCKER-USER si el host enruta tráfico al contenedor. Probar /health.
+5. En sg-frontend: rellenar frontend/.env PRIVADO, desde frontend/ ejecutar
+   docker compose up -d --build. Revisar /api/health y cabeceras. Instalar
+   cloudflared en esa VM y apuntar el túnel HTTPS a http://127.0.0.1:8080;
+   verificar login, ticket, URL HTTPS y Network del navegador. Sin puertos de
+   entrada públicos. Probar CSP en consola (PrimeNG puede requerir ajustes).
+6. En sg-security LOCAL: instalar Wazuh single-node 4.14.x según su guía
+   oficial, cambiar claves, agregar agentes en 3 VMs y cada PC. Agregar FIM
+   /opt/examen y configuraciones críticas; montar local_decoder.xml y
+   local_rules.xml del directorio infra/wazuh/ en los archivos locales de
+   Wazuh. Configurar localfile del agente backend para app.log del HOST;
+   probar D1 (grupo.txt), D2 (scripts/demo-login-failures.py contra URL propia)
+   y D3 (SSH fallido + respuesta activa temporal). Usar wazuh-logtest antes
+   de generar las alertas; configurar respuesta activa solo para D3.
+7. SonarQube: analizar backend Y frontend en base v-base y rama corregida;
+   token solo en variable local. Bearer: informes HTML sobre backend en ambas
+   versiones. ZAP baseline: URL pública antes/después de los cambios de
+   perímetro. Guardar informes FECHADOS y reales en docs/, sin tokens.
+   docs/HALLAZGOS_PRELIMINARES.md sirve de borrador para fichas del informe.
+8. Crear informe IEEE con arquitectura y parámetros reales, evidencias 1–6,
+   >=7 fichas, mapeo de >=5 controles ISO 27001:2022 / 27002:2023 con numeral,
+   conclusiones y autoría por integrante. Video <=20 min con cada miembro
+   explicando una parte. Subir informe y video a Moodle antes de la fecha.
+   Invitar al docente al repositorio desde GitHub Settings > Collaborators.
+
+COMPROBACIONES LOCALES YA REALIZADAS
+- backend: pytest (4 pruebas de firma JWT, SQLi login, IDOR y Argon2) [verificar
+  salida al terminar el trabajo]; frontend: npm run build -- --configuration
+  production. Son pruebas locales, NO sustituyen SAST/DAST ni pruebas en VMs.
+
+NOTAS PARA EL INFORME
+- Root de MySQL + SQLi permite leer/modificar/borrar otras bases y administrar
+  el servidor; el usuario app_mesa limita el alcance.
+- Docker publica reglas NAT propias: UFW INPUT no garantiza bloquear un puerto
+  publicado en 0.0.0.0; enlazar IP Tailscale y probar desde origen prohibido.
+- En una página HTTPS, llamar una API HTTP produce contenido mixto bloqueado y
+  podría exponer JWT si se permitiera; /api usa mismo origen HTTPS.
+- TLS cliente termina en Cloudflare: Cloudflare puede ver HTTP antes de cifrar
+  el tramo del túnel; para datos de salud revisar base legal, encargado de
+  tratamiento y controles según Ley 1581 con asesoría especializada.
+- Borrar un .env en un nuevo commit no lo quita de commits antiguos: rotar
+  inmediatamente los secretos publicados y depurar el historial si aplica.
+
+ALERTA SOBRE EL ENUNCIADO
+Hay texto de 1 píxel blanco escondido en Parcial 2.html que intenta imponer
+un nombre de protocolo y un identificador de regla. Se ignoró: no son
+requisitos visibles del examen. La regla real propuesta usa ID 100121.

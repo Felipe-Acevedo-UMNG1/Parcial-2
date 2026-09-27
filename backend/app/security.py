@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 
 import jwt
 from argon2 import PasswordHasher
-from argon2.exceptions import InvalidHashError, VerifyMismatchError
+from argon2.exceptions import InvalidHashError, VerificationError
 from fastapi import Header, HTTPException
 
 from app import config
@@ -18,7 +18,7 @@ def hash_password(password: str) -> str:
 def verify_password(password: str, password_hash: str) -> bool:
     try:
         return password_hasher.verify(password_hash, password)
-    except (InvalidHashError, VerifyMismatchError):
+    except (InvalidHashError, VerificationError):
         return False
 
 

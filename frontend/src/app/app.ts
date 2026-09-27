@@ -65,12 +65,17 @@ export class App implements OnInit {
       },
       error: (e) => {
         this.cargando = false;
-        this.error(e.error?.detail ?? 'Error al iniciar sesión');
+        this.error(typeof e.error?.detail === 'string' ? e.error.detail :
+          e.status === 429 ? 'Demasiados intentos. Espere un minuto.' : 'Error al iniciar sesión');
       },
     });
   }
 
   enviarRegistro(): void {
+    if (this.password.length < 12 || this.password.length > 128) {
+      this.error('Use una contraseña de 12 a 128 caracteres.');
+      return;
+    }
     this.cargando = true;
     this.api.registro(this.username, this.email, this.password).subscribe({
       next: () => {
@@ -81,7 +86,8 @@ export class App implements OnInit {
       },
       error: (e) => {
         this.cargando = false;
-        this.error(e.error?.detail ?? 'Error en el registro');
+        this.error(typeof e.error?.detail === 'string' ? e.error.detail :
+          'Revise usuario, correo y contraseña e intente de nuevo.');
       },
     });
   }

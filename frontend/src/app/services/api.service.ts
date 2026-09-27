@@ -33,7 +33,13 @@ export class ApiService {
   private token: string | null = null;
   private activeRole = '';
   private activeUsername = '';
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    // Elimina únicamente las claves que persistía la versión vulnerable.
+    // Algunos navegadores bloquean el almacenamiento; la sesión no depende de él.
+    try {
+      for (const key of ['token', 'rol', 'username']) localStorage.removeItem(key);
+    } catch { /* La sesión corregida funciona solo en memoria. */ }
+  }
 
   private headers(): HttpHeaders {
     return new HttpHeaders({ Authorization: `Bearer ${this.token ?? ''}` });

@@ -1,6 +1,11 @@
 .env
 .env.*
 secrets
+*.pem
+*.key
+*.crt
+*.age
+*.private.*
 __pycache__
 .pytest_cache
 venv

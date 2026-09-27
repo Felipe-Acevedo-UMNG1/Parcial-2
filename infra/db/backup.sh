@@ -10,7 +10,7 @@ install -d -m 0700 /var/backups/mesa_ayuda
 out="/var/backups/mesa_ayuda/$(date -u +%Y%m%dT%H%M%SZ).sql.age"
 trap 'rm -f "$out.tmp"' EXIT
 mysqldump --defaults-extra-file=/root/.my.cnf --single-transaction \
-  --skip-lock-tables --no-tablespaces mesa_ayuda \
+  --skip-lock-tables --no-tablespaces --set-gtid-purged=OFF mesa_ayuda \
   | age -r "$AGE_RECIPIENT" > "$out.tmp"
 mv "$out.tmp" "$out"
 echo "Respaldo cifrado: $out"

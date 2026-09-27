@@ -4,6 +4,7 @@ import os
 from datetime import datetime, timedelta, timezone
 
 import jwt
+import pytest
 from fastapi.testclient import TestClient
 
 os.environ.setdefault("JWT_SECRET", "pruebas-una-clave-aleatoria-de-32-caracteres")
@@ -63,3 +64,81 @@ def test_password_hash_is_salted_and_verified():
     assert a != b and a.startswith("$argon2")
     assert security.verify_password("una-clave-fuerte-de-prueba", a)
     assert not security.verify_password("otra-clave", a)
+    assert not security.verify_password("una-clave", "5f4dcc3b5aa765d61d8327deb882cf99")
+
+
+@pytest.mark.parametrize("peer,trusted,forwarded,expected", [
+    ("100.64.0.30", "100.64.0.30", "203.0.113.5", "203.0.113.5"),
+    ("100.64.0.99", "100.64.0.30", "203.0.113.5", "100.64.0.99"),
+    ("100.64.0.30", "100.64.0.30", "invalid, forged", "100.64.0.30"),
+])
+def test_failed_login_trusts_only_frontend_peer(monkeypatch, caplog, peer, trusted, forwarded, expected):
+    monkeypatch.setattr(main.config, "TRUSTED_PROXY_IP", trusted)
+    monkeypatch.setattr(main, "fetch_one", lambda *args: None)
+    with TestClient(main.app, client=(peer, 12345)) as client:
+        response = client.post("/auth/login", headers={"X-Real-IP": forwarded},
+                               json={"username": "demo\nINJECT", "password": "not-logged"})
+    assert response.status_code == 401
+    assert f"source_ip={expected} username=demo_INJECT" in caplog.text
+    assert "not-logged" not in caplog.text
+
+
+def test_ready_reports_database_outage_without_secrets(monkeypatch, caplog):
+    def unavailable(*args):
+        raise RuntimeError("password=PRIVATE_DB_SECRET")
+    monkeypatch.setattr(main, "fetch_one", unavailable)
+    with TestClient(main.app) as client:
+        assert client.get("/health").status_code == 200
+        response = client.get("/ready")
+    assert response.status_code == 503
+    assert "PRIVATE_DB_SECRET" not in response.text + caplog.text
+    monkeypatch.setattr(main, "fetch_one", lambda *args: {"disponible": 1})
+    with TestClient(main.app) as client:
+        assert client.get("/ready").json()["database"] == "ok"
+
+
+def test_search_scopes_owner_and_parameterizes_input(monkeypatch):
+    queries = []
+    def search(sql, params):
+        queries.append((sql, params))
+        return []
+    monkeypatch.setattr(main, "fetch_all", search)
+    main.app.dependency_overrides[security.usuario_actual] = lambda: {"id": 7, "rol": "usuario"}
+    try:
+        with TestClient(main.app) as client:
+            assert client.get("/tickets/buscar", params={"q": "' OR 1=1 --"}).status_code == 200
+            assert client.get("/admin/usuarios").status_code == 403
+            assert client.get("/debug/config").status_code == 404
+    finally:
+        main.app.dependency_overrides.clear()
+    assert queries[0][1] == (7, "%' OR 1=1 --%")
+    assert "OR 1=1" not in queries[0][0]
+
+
+def test_owner_can_update_own_ticket(monkeypatch):
+    ticket = {"id": 99, "usuario_id": 7, "estado": "abierto"}
+    monkeypatch.setattr(main, "fetch_one", lambda *args: dict(ticket))
+    def update(sql, params):
+        assert params == ("cerrado", 99, 7)
+        ticket["estado"] = params[0]
+    monkeypatch.setattr(main, "execute", update)
+    main.app.dependency_overrides[security.usuario_actual] = lambda: {"id": 7, "rol": "usuario"}
+    try:
+        with TestClient(main.app) as client:
+            assert client.get("/tickets/99").status_code == 200
+            assert client.patch("/tickets/99/estado", json={"estado": "cerrado"}).json()["estado"] == "cerrado"
+    finally:
+        main.app.dependency_overrides.clear()
+
+
+def test_reset_password_preserves_user_and_uses_argon2(monkeypatch):
+    reset = importlib.import_module("app.reset_password")
+    monkeypatch.setattr("sys.argv", ["reset_password", "ana"])
+    monkeypatch.setattr(reset, "fetch_one", lambda *args: {"id": 7})
+    monkeypatch.setattr(reset, "getpass", lambda *args: "nueva-clave-segura-de-prueba")
+    changes = []
+    monkeypatch.setattr(reset, "execute", lambda sql, params: changes.append((sql, params)))
+    reset.main()
+    assert changes[0][0] == "UPDATE usuarios SET password_hash = %s WHERE id = %s"
+    hashed, user_id = changes[0][1]
+    assert user_id == 7 and security.verify_password("nueva-clave-segura-de-prueba", hashed)

@@ -2,6 +2,7 @@ import logging
 import os
 import re
 from ipaddress import ip_address
+from logging.handlers import RotatingFileHandler
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 
@@ -13,7 +14,11 @@ from app.security import crear_token, hash_password, usuario_actual, verify_pass
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger("mesa_ayuda")
 if os.getenv("APP_LOG_FILE"):
-    logger.addHandler(logging.FileHandler(os.environ["APP_LOG_FILE"]))
+    handler = RotatingFileHandler(
+        os.environ["APP_LOG_FILE"], maxBytes=5_000_000, backupCount=5, encoding="utf-8"
+    )
+    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+    logger.addHandler(handler)
 
 app = FastAPI(
     title="Mesa de Ayuda API",
@@ -26,6 +31,17 @@ app = FastAPI(
 @app.get("/health", tags=["General"])
 def health():
     return {"estado": "ok", "grupo": config.GRUPO_CODIGO, "version": app.version}
+
+
+@app.get("/ready", tags=["General"])
+def ready():
+    """Verifica también MySQL por TLS; no expone detalles de conexión."""
+    try:
+        fetch_one("SELECT 1 AS disponible")
+    except Exception as exc:
+        logger.warning("DB_UNAVAILABLE")
+        raise HTTPException(status_code=503, detail="Base de datos no disponible") from exc
+    return {"estado": "ok", "grupo": config.GRUPO_CODIGO, "database": "ok"}
 
 
 # ---------------------------------------------------------------- Autenticación

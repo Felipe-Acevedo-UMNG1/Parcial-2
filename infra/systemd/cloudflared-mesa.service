@@ -1,0 +1,19 @@
+[Unit]
+Description=Tunnel HTTPS de Mesa de Ayuda (laboratorio)
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=simple
+DynamicUser=true
+Environment=HOME=/tmp
+ExecStart=/usr/bin/cloudflared tunnel --no-autoupdate --url http://127.0.0.1:8080
+Restart=always
+RestartSec=5
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

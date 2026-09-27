@@ -9,3 +9,13 @@
 **/.angular/
 **/.pytest_cache/
 **/*.log
+**/.venv/
+**/secrets/
+**/*.pem
+**/*.key
+**/*.crt
+**/*.age
+**/*.sql.gz
+**/*.private.*
+**/firewall.generated.nft
+**/wazuh-docker/

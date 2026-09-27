@@ -29,6 +29,7 @@
           <input *ngIf="modoRegistro" pInputText [(ngModel)]="email" placeholder="Correo" />
           <input pInputText type="password" [(ngModel)]="password" placeholder="Contraseña"
                  (keyup.enter)="modoRegistro ? enviarRegistro() : enviarLogin()" />
+          <small *ngIf="modoRegistro">Contraseña de 12 a 128 caracteres. Usuario: letras, números, punto, guion o guion bajo.</small>
           <p-button *ngIf="!modoRegistro" label="Ingresar" icon="pi pi-sign-in" [loading]="cargando"
                     (onClick)="enviarLogin()" styleClass="w-full" />
           <p-button *ngIf="modoRegistro" label="Registrarme" icon="pi pi-user-plus" [loading]="cargando"

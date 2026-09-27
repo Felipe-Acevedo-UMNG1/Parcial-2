@@ -20,6 +20,9 @@ def get_connection():
         ssl_verify_identity=True,
         cursorclass=DictCursor,
         autocommit=True,
+        connect_timeout=5,
+        read_timeout=10,
+        write_timeout=10,
     )
 
 

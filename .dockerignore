@@ -2,6 +2,12 @@
 **/.env
 **/.env.*
 **/secrets
+**/*.pem
+**/*.key
+**/*.crt
+**/*.age
+**/*.private.*
+**/wazuh-docker
 **/node_modules
 **/dist
 **/.angular

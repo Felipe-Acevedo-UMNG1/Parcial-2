@@ -3,6 +3,8 @@
 Trabajo del examen aplicado de Seguridad Informática (UMNG, 2026-II).
 
 - [INSTRUCCIONES_PARCIAL_2.txt](INSTRUCCIONES_PARCIAL_2.txt): pasos, cambios y pendientes.
+- [docs/REVISION.md](docs/REVISION.md): comparación con el HTML y límites de la validación.
+- [infra/OPERACION.md](infra/OPERACION.md): comandos por nodo, restauración y análisis.
 - [ORIGEN_BASE.txt](ORIGEN_BASE.txt): origen de las bases y excepciones por secretos.
 - `backend/`: API FastAPI corregida y pruebas de regresión.
 - `frontend/`: cliente Angular, Nginx mediante `infra/nginx.conf`.

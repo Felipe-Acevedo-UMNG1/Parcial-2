@@ -11,13 +11,15 @@ Guía completa: [../INSTRUCCIONES_PARCIAL_2.txt](../INSTRUCCIONES_PARCIAL_2.txt)
    `JWT_SECRET` se puede generar con `openssl rand -hex 32`.
 4. En el host del backend: `sudo install -d -o 10001 -g 10001 -m 0750
    /var/log/mesa_ayuda`. Después ejecutar `docker compose up -d --build`.
-5. Verificar `/health`, una conexión permitida y otra bloqueada desde la
-   tailnet. El puerto Docker se enlaza a la IP Tailscale; proteger también
-   DOCKER-USER de acuerdo con el firewall del host.
+5. Verificar `/health` y `/ready` (este último comprueba MySQL/TLS), una conexión
+   permitida y otra bloqueada desde la tailnet. El puerto Docker se enlaza a
+   Tailscale; `infra/firewall.py` genera también filtrado FORWARD para Docker.
 
 El contenedor no crea tablas: iniciar `app_mesa` con privilegios DML es
 incompatible con crear esquemas en cada arranque. Los usuarios antiguos cuyo
-hash sea MD5 deberán cambiar su contraseña para poder acceder.
+hash sea MD5 deberán cambiar su contraseña para poder acceder. Tras respaldar
+y aplicar `infra/db/migrate-passwords.sql`, ejecutar `docker compose exec
+backend python -m app.reset_password USUARIO`. La clave se pide sin mostrarla.
 
 Pruebas locales: `pip install -r requirements.txt httpx pytest` y
 `pytest -q` (sin MySQL ni VMs). El token se emite por 30 minutos y requiere

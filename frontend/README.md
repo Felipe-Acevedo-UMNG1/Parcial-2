@@ -17,5 +17,9 @@ Para desarrollo local con API en `127.0.0.1:8000`: `npm ci`, `npm start`.
 `proxy.conf.json` reenvía `/api` sin CORS. Para comprobar compilación:
 `npm run build -- --configuration production`.
 
+El patrón de desarrollo es `/api/**`. Producción desactiva CSS crítico inline
+para no generar manejadores `onload` incompatibles con `script-src 'self'`.
+El proxy público bloquea Swagger; consultar `/docs` directamente por Tailscale.
+
 El token permanece en memoria y se pierde al recargar la página; el usuario
 inicia sesión nuevamente. Las descripciones se muestran como texto seguro.

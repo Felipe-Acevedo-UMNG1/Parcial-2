@@ -1,5 +1,10 @@
 # Revisión contra Parcial 2.html — 26 de septiembre de 2026
 
+**Registro histórico.** El 29/09/2026 se recibieron y aplicaron los parámetros
+del grupo 2 y se confirmó la composición del equipo. El estado actualizado está
+en [../ACTUALIZACION_SI26_G02.txt](../ACTUALIZACION_SI26_G02.txt). Las referencias
+a parámetros e integrantes pendientes en este registro describen el 26/09/2026.
+
 Se revisó el HTML indicado y el repositorio. No se leyeron los demás archivos
 fuente del curso. Base de esta revisión: rama `acevedo` en commit
 `78a11bee635f22e9206d0acfa47708ba0a7d81e0`; las correcciones quedan en sus

@@ -1,7 +1,10 @@
 # Cliente Angular y proxy Nginx
 
-La base se conserva en `v-base`; las correcciones están en `acevedo`.
+La base se conserva en `v-base`; las correcciones están en `acevedo_perez_velandia`.
 Guía completa: [../INSTRUCCIONES_PARCIAL_2.txt](../INSTRUCCIONES_PARCIAL_2.txt).
+
+El backend del grupo SI26-G02 escucha en 8102; `.env.example` y el proxy local
+ya usan ese puerto. Si existe `.env`, actualizar APP_PORT=8102 conservando la IP.
 
 1. Copiar `.env.example` a `.env` con la IP Tailscale del backend y el puerto
    API real del grupo.
@@ -13,7 +16,7 @@ Guía completa: [../INSTRUCCIONES_PARCIAL_2.txt](../INSTRUCCIONES_PARCIAL_2.txt)
 4. Verificar URL HTTPS, peticiones `/api/...`, headers, limitación de login,
    CSP y la consola del navegador con casos de uso reales.
 
-Para desarrollo local con API en `127.0.0.1:8000`: `npm ci`, `npm start`.
+Para desarrollo local con API en `127.0.0.1:8102`: `npm ci`, `npm start`.
 `proxy.conf.json` reenvía `/api` sin CORS. Para comprobar compilación:
 `npm run build -- --configuration production`.
 

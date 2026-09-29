@@ -1,5 +1,5 @@
 FROM python:3.12-slim
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 APP_PORT=8102
 WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt \
@@ -9,5 +9,5 @@ RUN pip install --no-cache-dir -r requirements.txt \
     && chown appuser:appuser /var/log/mesa_ayuda
 COPY --chown=appuser:appuser app ./app
 USER appuser
-EXPOSE 8000
+EXPOSE 8102
 CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${APP_PORT} --no-proxy-headers"]

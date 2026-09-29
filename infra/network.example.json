@@ -3,7 +3,7 @@
   "backend_ip": "<IP_TAILSCALE_BACKEND>",
   "frontend_ip": "<IP_TAILSCALE_FRONTEND>",
   "security_ip": "<IP_TAILSCALE_SECURITY>",
-  "pc_ips": ["<IP_TAILSCALE_PC_1>", "<IP_TAILSCALE_PC_2>"],
-  "app_port": "<PUERTO_API_ASIGNADO>",
-  "db_port": "<PUERTO_DB_ASIGNADO>"
+  "pc_ips": ["<IP_TAILSCALE_PC_ACEVEDO>", "<IP_TAILSCALE_PC_PEREZ>", "<IP_TAILSCALE_PC_VELANDIA>"],
+  "app_port": 8102,
+  "db_port": 33062
 }

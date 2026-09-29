@@ -1,6 +1,6 @@
 # Hallazgos preliminares sobre las bases del examen
 
-Base: rama `v-base`. Solución: rama `acevedo`. OWASP Top 10:2021. Estas fichas
+Base: rama `v-base`. Solución: rama `acevedo_perez_velandia`. OWASP Top 10:2021. Estas fichas
 registran revisión del código y pruebas locales; el impacto controlado sobre el
 sistema desplegado y los informes de herramientas siguen pendientes.
 Las fichas con líneas, snippets y PoC están en [FICHAS_CODIGO.md](FICHAS_CODIGO.md);

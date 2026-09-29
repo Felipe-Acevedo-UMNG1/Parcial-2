@@ -1,7 +1,11 @@
 # API FastAPI
 
-La base se conserva en la rama `v-base`; las correcciones están en `acevedo`.
+La base se conserva en la rama `v-base`; las correcciones están en `acevedo_perez_velandia`.
 Guía completa: [../INSTRUCCIONES_PARCIAL_2.txt](../INSTRUCCIONES_PARCIAL_2.txt).
+
+Grupo SI26-G02: API 8102 y DB 33062. `.env.example` y los valores por defecto
+ya corresponden al grupo. Un `.env` existente debe actualizarse manualmente;
+no sobrescribir sus claves, IPs o contraseñas al copiar el ejemplo.
 
 1. Ejecutar `infra/db/mesa_ayuda.sql` con administrador local. El usuario
    `app_mesa` recibe solo SELECT, INSERT, UPDATE y DELETE sobre esa base.

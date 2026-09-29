@@ -1,6 +1,6 @@
 # Fichas de revisión de código
 
-Base fija: `b757385b7f38da91c0bad9d4e69e56e074a6a806`. Solución: rama `acevedo`.
+Base fija: `b757385b7f38da91c0bad9d4e69e56e074a6a806`. Solución: rama `acevedo_perez_velandia`.
 Las líneas indicadas corresponden a esa base, no a la rama corregida.
 Detección realizada: revisión manual del código y las pruebas locales citadas.
 SonarQube, Bearer y ZAP **no se ejecutaron** en esta revisión; agregar su
@@ -9,7 +9,7 @@ resultado real a cada ficha, incluso si no detectan el problema.
 Para obtener el diff verificable de cada archivo:
 
 ```sh
-git diff b757385b7f38da91c0bad9d4e69e56e074a6a806 acevedo -- RUTA_DEL_ARCHIVO
+git diff b757385b7f38da91c0bad9d4e69e56e074a6a806 acevedo_perez_velandia -- RUTA_DEL_ARCHIVO
 ```
 
 Las PoC siguientes son pasos pendientes para el laboratorio **propio** con

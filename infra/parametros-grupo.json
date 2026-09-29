@@ -1,0 +1,26 @@
+{
+  "grupo": 2,
+  "grupo_codigo": "SI26-G02",
+  "app_port": 8102,
+  "db_port": 33062,
+  "wireguard_subnet": "10.77.2.0/24",
+  "wireguard_solo_bono": true,
+  "integrantes": [
+    "Felipe Ricardo Acevedo Torres",
+    "Dustyn Fabian Pérez Rodríguez",
+    "Laura Sofia Velandia Sarmiento"
+  ],
+  "rama_trabajo": "acevedo_perez_velandia",
+  "hostnames_elegidos": {
+    "db": "sg-acevedo-db",
+    "backend": "sg-acevedo-backend",
+    "frontend": "sg-acevedo-frontend",
+    "security": "sg-acevedo-security"
+  },
+  "fuente": {
+    "archivo": "Parametros_Grupos_Proyecto_Segundo_Corte.pdf",
+    "pagina": 1,
+    "fila_grupo": 2,
+    "sha256": "42d887c63237f3e14233126c848d42e900c50daaada735c2b13008c60883ba73"
+  }
+}

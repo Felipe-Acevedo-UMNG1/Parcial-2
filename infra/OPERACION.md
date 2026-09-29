@@ -6,10 +6,18 @@ Los textos `<...>` se reemplazan con valores auténticos; no son comandos listos
 para pegar. Usar Ubuntu 24.04 y MySQL 8 para estas plantillas. No se han aplicado
 en VMs durante esta revisión.
 
+Parámetros confirmados: SI26-G02, API 8102 y MySQL 33062. La subred
+10.77.2.0/24 se reserva al bono WireGuard; no reemplaza la red Tailscale.
+`infra/parametros-grupo.json` conserva la asignación y su procedencia.
+Si ya existen `.env` o configuraciones en las VMs, sus valores anteriores
+tienen precedencia: actualizarlos, validar y reiniciar los servicios afectados.
+Copiar un `.env.example` actualizado no modifica una instalación existente.
+
 ## Red, arranque y firewall
 
 1. Completar `infra/network.example.json` en una copia `red.private.json` con
-   las IPv4 de `tailscale ip -4`, PCs y puertos. Completar/aplicar la ACL en el
+   las IPv4 de `tailscale ip -4` de los nodos y los tres PCs. Conservar
+   API 8102 y DB 33062. Completar/aplicar la ACL en el
    panel de Tailscale. Todos los PCs administradores deben estar en el grupo ACL.
 2. En **cada VM**, generar el firewall cambiando `backend` por su rol:
 
@@ -86,7 +94,7 @@ en VMs durante esta revisión.
    SHOW GRANTS FOR 'app_mesa'@'<IP_BACKEND>';
    ```
 
-   Desde backend, usar cliente MySQL con `--host=<IP_DB> --port=<DB_PORT>
+   Desde backend, usar cliente MySQL con `--host=<IP_DB> --port=33062
    --user=app_mesa --password --ssl-mode=VERIFY_IDENTITY --ssl-ca=<CA pública>`.
    Ejecutar `SHOW STATUS LIKE 'Ssl_cipher';`: debe tener cifrado. La misma
    conexión con `--ssl-mode=DISABLED` debe fallar; `CREATE TABLE` debe denegarse.
@@ -213,7 +221,7 @@ pesados con memoria insuficiente. Registrar las versiones/digests descargados y
 usar las mismas imágenes antes/después; no usar `down -v` al conservar análisis.
 
 Instalar SonarScanner CLI y Bearer CLI desde sus guías oficiales. Crear dos
-proyectos (grupo-backend, grupo-frontend), generar token local temporal, y hacer
+proyectos (SI26-G02-backend, SI26-G02-frontend), generar token local temporal, y hacer
 primero el análisis base y luego el final dentro de **los mismos proyectos**.
 Community no requiere análisis de ramas para esta comparación: identificar cada
 ejecución con `sonar.projectVersion=base` o `final` y conservar el historial.
@@ -222,8 +230,8 @@ ejecución con `sonar.projectVersion=base` o `final` y conservar el historial.
 git worktree add ../Parcial-2-base b757385b7f38da91c0bad9d4e69e56e074a6a806
 export SONAR_HOST_URL=http://<IP_SECURITY>:9000
 read -rsp 'Token Sonar: ' SONAR_TOKEN; export SONAR_TOKEN
-sonar-scanner -Dsonar.projectKey=<grupo>-backend -Dsonar.projectVersion=base -Dsonar.projectBaseDir=../Parcial-2-base/backend -Dsonar.sources=app -Dsonar.python.version=3.12
-sonar-scanner -Dsonar.projectKey=<grupo>-frontend -Dsonar.projectVersion=base -Dsonar.projectBaseDir=../Parcial-2-base/frontend -Dsonar.sources=src
+sonar-scanner -Dsonar.projectKey=SI26-G02-backend -Dsonar.projectVersion=base -Dsonar.projectBaseDir=../Parcial-2-base/backend -Dsonar.sources=app -Dsonar.python.version=3.12
+sonar-scanner -Dsonar.projectKey=SI26-G02-frontend -Dsonar.projectVersion=base -Dsonar.projectBaseDir=../Parcial-2-base/frontend -Dsonar.sources=src
 ```
 
 Repetir cambiando `base` por `final` y los directorios por `backend` y `frontend`

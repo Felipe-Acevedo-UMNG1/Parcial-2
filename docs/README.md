@@ -11,5 +11,6 @@ resultados de análisis. Ningún archivo aquí debe contener tokens o contraseñ
 No incluir capturas de equipos ajenos ni resultados inventados.
 
 REVISION.md registra lo comprobado localmente y lo pendiente de infraestructura.
+../ACTUALIZACION_SI26_G02.txt registra los parámetros confirmados el 29/09/2026.
 FICHAS_CODIGO.md amplía ubicaciones, fragmentos y pruebas de las fallas.
 Los comandos de análisis están en ../infra/OPERACION.md.

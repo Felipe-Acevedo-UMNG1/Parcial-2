@@ -1,11 +1,13 @@
-FROM python:3.12
-
+FROM python:3.12-slim
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 APP_PORT=8102
 WORKDIR /app
-
-COPY . .
-
-RUN pip install -r requirements.txt
-
-EXPOSE 8000
-
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${APP_PORT:-8000} --reload"]
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt \
+    && groupadd --system --gid 10001 appuser \
+    && useradd --system --uid 10001 --gid 10001 --create-home appuser \
+    && mkdir -p /var/log/mesa_ayuda \
+    && chown appuser:appuser /var/log/mesa_ayuda
+COPY --chown=appuser:appuser app ./app
+USER appuser
+EXPOSE 8102
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${APP_PORT} --no-proxy-headers"]

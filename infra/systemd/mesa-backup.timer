@@ -1,0 +1,11 @@
+[Unit]
+Description=Respaldo diario de Mesa de Ayuda
+
+[Timer]
+OnCalendar=*-*-* 02:00:00
+Persistent=true
+RandomizedDelaySec=300
+Unit=mesa-backup.service
+
+[Install]
+WantedBy=timers.target

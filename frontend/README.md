@@ -1,43 +1,28 @@
-# 🎫 Mesa de Ayuda — Frontend (Angular + PrimeNG)
+# Cliente Angular y proxy Nginx
 
-Cliente web de la Mesa de Ayuda: inicio de sesión, registro, tickets (crear, buscar, ver, cambiar estado) y listado de usuarios para administradores. Base para el **Examen Aplicado — Segundo Corte 2026-II** de Seguridad Informática (UMNG).
+La base se conserva en `v-base`; las correcciones están en `acevedo_perez_velandia`.
+Guía completa: [../INSTRUCCIONES_PARCIAL_2.txt](../INSTRUCCIONES_PARCIAL_2.txt).
 
-> Este código fue generado con asistentes de IA y se entrega **tal como salió**. Parte de su trabajo es auditarlo.
+El backend del grupo SI26-G02 escucha en 8102; `.env.example` y el proxy local
+ya usan ese puerto. Si existe `.env`, actualizar APP_PORT=8102 conservando la IP.
 
----
+1. Copiar `.env.example` a `.env` con la IP Tailscale del backend y el puerto
+   API real del grupo.
+2. En `frontend/`, ejecutar `docker compose up -d --build`. La imagen usa
+   [../infra/nginx.conf](../infra/nginx.conf), que recibe esos valores como
+   plantilla de Nginx al arrancar.
+3. En `sg-frontend`, apuntar cloudflared a `http://127.0.0.1:8080`. El
+   puerto solo escucha en loopback del host, sin entrada pública directa.
+4. Verificar URL HTTPS, peticiones `/api/...`, headers, limitación de login,
+   CSP y la consola del navegador con casos de uso reales.
 
-## 📋 Requisitos
+Para desarrollo local con API en `127.0.0.1:8102`: `npm ci`, `npm start`.
+`proxy.conf.json` reenvía `/api` sin CORS. Para comprobar compilación:
+`npm run build -- --configuration production`.
 
-- Node.js 22+ y npm
-- Backend `mesa_ayuda_backend` en ejecución
-- Docker (para el despliegue en `sg-frontend`)
+El patrón de desarrollo es `/api/**`. Producción desactiva CSS crítico inline
+para no generar manejadores `onload` incompatibles con `script-src 'self'`.
+El proxy público bloquea Swagger; consultar `/docs` directamente por Tailscale.
 
-## ▶️ Ejecución local
-
-```bash
-npm install
-npm start          # http://localhost:4200
-```
-
-La URL del backend está definida en `src/app/services/api.service.ts`.
-
-## 🐳 Docker
-
-```bash
-docker compose up -d --build     # sirve la aplicación con Nginx en el puerto 80
-```
-
-La configuración de Nginx está en `nginx.conf`.
-
-## 📁 Estructura
-
-```
-mesa_ayuda_front/
-├── src/app/
-│   ├── app.ts / app.html        # Vistas: login, tickets, detalle, admin
-│   ├── app-module.ts
-│   └── services/api.service.ts  # Cliente HTTP y manejo de sesión
-├── nginx.conf
-├── Dockerfile
-└── docker-compose.yml
-```
+El token permanece en memoria y se pierde al recargar la página; el usuario
+inicia sesión nuevamente. Las descripciones se muestran como texto seguro.

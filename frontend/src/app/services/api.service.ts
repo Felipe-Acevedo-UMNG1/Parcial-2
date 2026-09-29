@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-const BASE_URL = 'http://localhost:8000';
+const BASE_URL = '/api';
 
 export interface LoginResponse {
   access_token: string;
@@ -24,40 +24,49 @@ export interface Usuario {
   id: number;
   username: string;
   email: string;
-  password_hash: string;
   rol: string;
   creado_en: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  constructor(private http: HttpClient) {}
+  private token: string | null = null;
+  private activeRole = '';
+  private activeUsername = '';
+  constructor(private http: HttpClient) {
+    // Elimina únicamente las claves que persistía la versión vulnerable.
+    // Algunos navegadores bloquean el almacenamiento; la sesión no depende de él.
+    try {
+      for (const key of ['token', 'rol', 'username']) localStorage.removeItem(key);
+    } catch { /* La sesión corregida funciona solo en memoria. */ }
+  }
 
   private headers(): HttpHeaders {
-    return new HttpHeaders({ Authorization: `Bearer ${localStorage.getItem('token') ?? ''}` });
+    return new HttpHeaders({ Authorization: `Bearer ${this.token ?? ''}` });
   }
 
   guardarSesion(res: LoginResponse, username: string): void {
-    localStorage.setItem('token', res.access_token);
-    localStorage.setItem('rol', res.rol);
-    localStorage.setItem('username', username);
-    console.log('Sesión iniciada', username, res.access_token);
+    this.token = res.access_token;
+    this.activeRole = res.rol;
+    this.activeUsername = username;
   }
 
   cerrarSesion(): void {
-    localStorage.clear();
+    this.token = null;
+    this.activeRole = '';
+    this.activeUsername = '';
   }
 
   get autenticado(): boolean {
-    return !!localStorage.getItem('token');
+    return !!this.token;
   }
 
   get rol(): string {
-    return localStorage.getItem('rol') ?? '';
+    return this.activeRole;
   }
 
   get username(): string {
-    return localStorage.getItem('username') ?? '';
+    return this.activeUsername;
   }
 
   health(): Observable<{ estado: string; grupo: string; version: string }> {
@@ -77,7 +86,7 @@ export class ApiService {
   }
 
   buscar(q: string): Observable<Ticket[]> {
-    return this.http.get<Ticket[]>(`${BASE_URL}/tickets/buscar?q=${q}`, { headers: this.headers() });
+    return this.http.get<Ticket[]>(`${BASE_URL}/tickets/buscar?q=${encodeURIComponent(q)}`, { headers: this.headers() });
   }
 
   verTicket(id: number): Observable<Ticket> {

@@ -1,0 +1,15 @@
+[Unit]
+Description=Firewall del parcial sin vaciar tablas ajenas
+Before=docker.service mysql.service
+After=network-pre.target
+Wants=network-pre.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/nft -f /etc/examen-firewall.nft
+ExecReload=/usr/sbin/nft -f /etc/examen-firewall.nft
+# No hay ExecStop: detener el servicio no desprotege el host.
+
+[Install]
+WantedBy=multi-user.target

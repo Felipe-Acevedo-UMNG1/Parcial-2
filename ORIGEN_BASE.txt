@@ -2,10 +2,15 @@ Código fuente del examen (historial externo no importado):
 - Backend: https://github.com/andressalamancaumng/mesa_ayuda_backend
 - Frontend: https://github.com/andressalamancaumng/mesa_ayuda_front
 
-Excepciones preventivas del primer commit v-base:
+Excepciones preventivas de la importación identificada por la rama v-base:
 - Se excluyó backend/env_del_examen.txt, que trae una contraseña de MySQL
   y una clave JWT fija. No debe copiarse al historial propio.
 - Se eliminó el valor fijo de JWT_SECRET en backend/app/config.py;
   el secreto se exige en el entorno.
 El resto del código de los dos proyectos se preservó en la base, sin importar
 el historial de git ajeno. v-base sirve para comparar hallazgos y correcciones.
+
+La importación está en b757385b7f38da91c0bad9d4e69e56e074a6a806, después de
+un commit inicial de documentación. Por tanto, NO cumple literalmente el
+requisito de primer commit con código sin cambios. Documentar esta excepción
+ante el docente; crear la etiqueta v-base no corrige por sí solo esa diferencia.

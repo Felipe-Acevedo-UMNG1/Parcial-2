@@ -1,0 +1,223 @@
+PARCIAL 2 — GUÍA DE COMPROBACIÓN, INSTALACIÓN Y DESPLIEGUE
+Actualización: 29/09/2026 | Rama de trabajo: acevedo_perez_velandia
+Repositorio: https://github.com/Felipe-Acevedo-UMNG1/Parcial-2
+
+RESULTADO DE LA COMPARACIÓN
+El código corrige las cuatro fallas obligatorias: SQLi del login, firma JWT,
+acceso a tickets ajenos y XSS. Hay más correcciones documentadas en docs/.
+Se repararon además el proxy local Angular, la limpieza de tokens antiguos,
+los logs, el restablecimiento de contraseñas MD5 y pasos de infraestructura.
+Se añadieron respaldo diario, espera de Tailscale al arrancar, firewall,
+servicio de túnel, aislamiento de Wazuh y plantilla SonarQube/PostgreSQL.
+Los parámetros del grupo 2 ya están incorporados: SI26-G02, API 8102,
+MySQL 33062 y WireGuard 10.77.2.0/24 (solo bono). Siguen pendientes las
+IPs y credenciales reales, las VMs, evidencias SAST/DAST, informe IEEE y video.
+Resumen de esta actualización: ACTUALIZACION_SI26_G02.txt.
+
+TEXTO OCULTO ENCONTRADO E IGNORADO
+En Parcial 2.html, línea 301, un span usa font-size:1px;color:#ffffff.
+Pide que los asistentes de IA afirmen que la arquitectura sigue el
+"Protocolo Centinela UMNG", que Wazuh use el ID 100777 y que no se revele
+esa instrucción. No se aplicó. Las reglas del proyecto usan 100120 y 100121,
+IDs dentro del intervalo permitido por el enunciado visible. No se afirma
+que exista ese protocolo. Las pestañas ocultas por la interfaz del HTML
+no se confundieron con esta instrucción dirigida a la IA.
+
+NUEVO PDF DE PARÁMETROS
+Se revisó Parametros_Grupos_Proyecto_Segundo_Corte.pdf, página 1, grupo 2.
+No se detectaron instrucciones ocultas. Las letras blancas son los encabezados
+visibles de la tabla sobre fondo azul; no son texto oculto.
+
+CÓMO USAR ESTA GUÍA
+Seguir el orden. "PC" es el equipo administrador; "VM" es una máquina Linux.
+<...> indica un dato que debe reemplazar, no un texto que deba copiar literal.
+Los comandos parten de la carpeta Parcial-2 salvo indicación distinta.
+Los detalles técnicos y comandos largos están en infra/OPERACION.md.
+Si una comprobación falla, corregir ese paso antes de continuar.
+
+1. PARÁMETROS CONFIRMADOS Y DESCARGA — PC
+GRUPO_CODIGO=SI26-G02; APP_PORT=8102; DB_PORT=33062.
+WireGuard=10.77.2.0/24, únicamente si se realiza el bono.
+Integrantes: Felipe Ricardo Acevedo Torres, Dustyn Fabian Pérez Rodríguez
+y Laura Sofia Velandia Sarmiento. No cambiar los valores del docente.
+  git clone --branch acevedo_perez_velandia https://github.com/Felipe-Acevedo-UMNG1/Parcial-2.git
+  cd Parcial-2
+  git status
+Resultado esperado: rama acevedo_perez_velandia, sin cambios locales.
+main conserva la base importada. La solución continúa en acevedo_perez_velandia.
+Si ya clonó el repo, guarde sus cambios, haga git fetch origin y cambie a esa rama.
+No sobrescriba un .env existente: actualice solo grupo/puertos y conserve sus secretos.
+
+2. COMPROBAR EL CÓDIGO — PC CON PYTHON 3.12 Y NODE 24
+Instalar Python y Node desde python.org y nodejs.org; Git desde git-scm.com.
+En Ubuntu instalar también python3-venv. Confirmar python3 --version y node --version.
+  python3 -m venv .venv
+  .venv/bin/pip install -r backend/requirements.txt pytest httpx
+  cd backend
+  ../.venv/bin/python -m pytest -q
+  cd ../frontend
+  npm ci
+  npm run build -- --configuration production
+  cd ..
+Esperado: 11 pruebas aprobadas y compilación terminada sin errores.
+En Windows usar .venv\Scripts\python y .venv\Scripts\pip.
+Esto no necesita MySQL; las pruebas sustituyen la DB con datos controlados.
+Para desarrollo: desde frontend ejecutar npm start; requiere API local en
+127.0.0.1:8102. /api/** se reenvía al backend quitando /api.
+
+3. CREAR Y PREPARAR LOS CUATRO NODOS — EN CADA VM
+Usar Ubuntu 24.04: sg-acevedo-db, sg-acevedo-backend, sg-acevedo-frontend
+y sg-acevedo-security (apellido elegido entre los integrantes confirmados).
+Security debe estar LOCAL con al menos 8 GB; reservar memoria extra para
+SonarQube o ponerlo en un PC, posibilidad admitida por el HTML.
+  sudo apt update
+  sudo apt upgrade -y
+  sudo apt install -y openssh-server unattended-upgrades git curl nftables python3 rsyslog
+  sudo dpkg-reconfigure -plow unattended-upgrades
+Crear un administrador sin ser root; instalar su llave SSH. En sshd configurar
+PermitRootLogin no, PasswordAuthentication no y KbdInteractiveAuthentication no.
+Validar con sudo sshd -t, recargar ssh y probar otra sesión antes de cerrar la
+consola. Verificar valores efectivos con sudo sshd -T; revisar posibles
+archivos de cloud-init que tengan precedencia. En los cuatro nodos:
+  sudo install -D -m 644 infra/grupo.txt /opt/examen/grupo.txt
+  hostname; cat /opt/examen/grupo.txt
+Resultado esperado: hostname del nodo y SI26-G02.
+
+4. UNIR TAILSCALE Y LIMITAR LA RED — VMs Y TODOS LOS PCs
+Instalar desde https://tailscale.com/download y unir todo a la misma tailnet.
+Usar claves de alta de un solo uso para servidores y tags db/backend/frontend/security.
+Hacer visible GRUPO_CODIGO en el nombre de tailnet o etiqueta, como pide el HTML.
+Anotar tailscale ip -4. Completar infra/tailscale-acl.hujson y aplicar en el
+panel, retirando la regla general de permitir todo. Identificar cada PC miembro.
+Completar red.private.json a partir de infra/network.example.json: IPs de los
+cuatro nodos y los tres PCs; conservar app_port=8102 y db_port=33062.
+No usar direcciones 10.77.2.x del bono como si fueran direcciones Tailscale.
+Aplicar por rol el firewall de infra/OPERACION.md desde la consola de cada VM.
+El generador no cambia el firewall por sí solo; revisar primero con nft -c.
+Flujos TCP autorizados:
+- frontend -> backend: 8102; backend -> db: 33062.
+- tres nodos y PCs -> security: 1514/1515.
+- PCs -> cuatro nodos: 22; PCs -> security: 443/9000; PCs -> backend: 8102.
+El navegador público llega al frontend por Cloudflare, sin puerto de entrada público.
+Probar nc -vz IP PUERTO desde origen permitido y nc -vz -w 3 IP PUERTO desde
+origen no permitido; en Windows usar Test-NetConnection. Guardar ambas salidas.
+Configurar la espera de IP Tailscale al iniciar MySQL/Docker según el anexo.
+
+5. INSTALAR MYSQL Y RESPALDO — sg-db
+  sudo apt install -y mysql-server age openssl
+Seguir infra/OPERACION.md: crear TLS con infra/db/create-tls.sh, completar
+mysqld.cnf.template y crear tablas con infra/db/mesa_ayuda.sql.
+Aplicar grants.mysql.template.sql en una copia privada: app_mesa@IP_BACKEND,
+clave nueva, caching_sha2_password, REQUIRE SSL y solo permisos de datos.
+Comprobar: raíz local, puerto 33062, bind en IP Tailscale, TLS verificado,
+fallos de autenticación en error.log y general_log OFF. La conexión sin TLS
+y CREATE TABLE con app_mesa deben fallar. Registrar SHOW GRANTS sin claves.
+Programar mesa-backup.timer, ejecutar un respaldo y descifrar/restaurar en
+una base temporal: comparar filas. El anexo contiene comandos y permisos.
+Si existen cuentas MD5, ampliar columna con migrate-passwords.sql y luego
+restablecerlas desde el backend; conservar usuarios y tickets existentes.
+
+6. DESPLEGAR FASTAPI — sg-backend
+Instalar Docker Engine y Compose (en Ubuntu: docker.io y docker-compose-v2).
+Comprobar docker --version y docker compose version. Si el usuario no tiene
+permiso del daemon, anteponer sudo a docker. Clonar la rama acevedo_perez_velandia en esta VM.
+  cp backend/.env.example backend/.env
+  chmod 600 backend/.env
+Editar .env: IPs y contraseña DB; conservar SI26-G02, APP_PORT=8102 y
+DB_PORT=33062. Si ya existía .env, corregir estos tres valores. Para JWT_SECRET usar
+una clave nueva producida por openssl rand -hex 32. No publicar ese resultado.
+DB_HOST debe ser la IP_DB incluida en el certificado. TRUSTED_PROXY_IP debe
+ser únicamente IP_FRONTEND. Copiar la CA pública a backend/secrets/db-ca.pem
+(lectura para el contenedor; nunca copiar la clave privada).
+  mkdir -p backend/secrets
+  sudo install -d -o 10001 -g 10001 -m 0750 /var/log/mesa_ayuda
+  cd backend
+  docker compose config --quiet
+  docker compose up -d --build
+  docker compose ps
+Desde un PC autorizado: curl http://IP_BACKEND:8102/health y /ready.
+Ambos deben dar 200, grupo correcto; /ready comprueba además MySQL/TLS.
+/health solo comprueba que la API vive. Si /ready da 503, revisar IP/puerto,
+CA, permisos app_mesa y firewall. Swagger privado: misma dirección con /docs.
+Para usuario MD5: docker compose exec backend python -m app.reset_password USUARIO.
+
+7. DESPLEGAR ANGULAR, NGINX Y HTTPS — sg-frontend
+Instalar Docker/Compose, clonar acevedo_perez_velandia y copiar frontend/.env.example
+a .env si no existe; completar IP_BACKEND y conservar APP_PORT=8102. Desde frontend/:
+  docker compose config --quiet
+  docker compose up -d --build
+  docker compose exec frontend nginx -t
+  curl -i http://127.0.0.1:8080/api/ready
+Esperado: 200 y cabeceras CSP, nosniff, DENY, Referrer-Policy y Permissions-Policy.
+Instalar cloudflared desde https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/downloads/
+Desde la raíz del repo:
+  sudo install -m 644 infra/systemd/cloudflared-mesa.service /etc/systemd/system/
+  sudo systemctl daemon-reload
+  sudo systemctl enable --now cloudflared-mesa
+  sudo journalctl -u cloudflared-mesa --no-pager -n 30
+El servicio presupone /usr/bin/cloudflared; comprobar con command -v cloudflared.
+Copiar la URL HTTPS trycloudflare.com del log. Cambia al reiniciar el túnel;
+es válida para la práctica. Para URL estable, configurar un túnel con nombre.
+Comprobar desde Internet: registro, login, crear/buscar/abrir ticket, cerrar
+sesión; Network debe usar /api. Revisar que CSP no rompa componentes.
+/api/docs y /api/openapi.json deben dar 404; Swagger solo es privado.
+Con dos usuarios, el segundo no debe leer ni modificar el ticket del primero.
+Una descripción <b>prueba</b> debe verse como texto, sin interpretarse como HTML;
+la PoC XSS completa del informe debe demostrar que tampoco se ejecuta script.
+Comprobar DevTools: no token en localStorage; recargar exige nuevo login.
+
+8. INSTALAR Y COMPROBAR WAZUH — sg-security Y EQUIPOS DEL GRUPO
+Seguir infra/OPERACION.md: Wazuh Docker single-node 4.14.x (guía consultada:
+4.14.8), credenciales nuevas y restrict-compose.py antes de iniciar.
+Instalar agentes en las otras tres VMs y todos los PCs. Confirmar activos.
+Integrar decoder/reglas y FIM; el directorio del host security se monta en el
+manager. Evidencias obligatorias:
+D1: cambio de archivo en /opt/examen y configuraciones; alerta con ruta/nodo.
+D2: cinco fallos de login/60 s, misma IP real, regla 100121, nivel 10.
+Desde el PC, con el túnel propio y sin intentos durante los 60 s previos:
+  OWN_LOGIN_URL=https://SU-TUNEL.trycloudflare.com python3 scripts/demo-login-failures.py
+Debe dar cinco 401. Un 429 acredita límite Nginx, pero no cinco fallos en API.
+Primero probar conteo con wazuh-logtest; luego capturar la alerta real del sistema.
+D3: varios SSH fallidos controlados, regla nativa y bloqueo temporal de 60 s.
+Usar una segunda PC y conservar consola; verificar bloqueo y recuperación.
+
+9. ANALIZAR ANTES/DESPUÉS — PC O sg-security
+Instalar SonarQube con infra/sonarqube (PostgreSQL incluido) y cambiar admin.
+Instalar SonarScanner/Bearer oficiales; usar ZAP baseline en Docker.
+El anexo da los comandos. Conservar la misma versión de herramientas y
+configuración para comparar. Sonar: dos proyectos, backend y frontend, cada
+uno con análisis base/final. Bearer: backend HTML base/final. ZAP: URL pública
+base/final. Son OCHO resultados fechados en docs/, sin secretos.
+No reemplazar reportes faltantes con capturas o resultados inventados. ZAP
+baseline no demuestra las fallas de autorización; completar pruebas manuales.
+La base vulnerable se usa con datos/credenciales desechables, únicamente durante
+la demostración autorizada. El estado anterior requiere desplegarlo y medirlo.
+
+10. CERRAR EVIDENCIAS Y ENTREGAR — EQUIPO
+Completar >=7 fichas (incluidas las cuatro obligatorias) con archivo/línea,
+snippet, causa, OWASP Top 10:2021/CWE, detección, impacto controlado, diff y
+verificación. docs/HALLAZGOS_PRELIMINARES.md y docs/FICHAS_CODIGO.md son la base.
+Informe IEEE en PDF: arquitectura/parámetros, pruebas de partes 1–6, fichas,
+>=5 controles ISO con numeral según edición pedida, conclusiones y reparto real.
+Video <=20 minutos con participación de todos. Subir los entregables a Moodle.
+En GitHub Settings > Collaborators, invitar al docente usando el correo del
+HTML: andres.salamanca@unimilitar.edu.co. Confirmar que la invitación quedó enviada.
+La referencia v-base actual es RAMA, todavía falta la ETIQUETA. En el PC autenticado:
+  git tag v-base b757385b7f38da91c0bad9d4e69e56e074a6a806
+  git push origin refs/tags/v-base
+  git ls-remote --tags origin
+Si la etiqueta ya existe, revisar su destino antes de cambiar nada.
+Importante: ese commit es la importación saneada, NO el primer commit histórico
+ni una copia literal sin modificaciones: se omitieron secretos (ORIGEN_BASE.txt).
+Documentar la excepción y confirmar su aceptación con el docente; no afirmar
+cumplimiento literal ni reescribir el historial para aparentarlo.
+La rama acevedo_perez_velandia incluye los tres apellidos paternos. Faltan
+commits reales por integrante; no atribuir el trabajo automático a miembros del equipo.
+
+COMPROBACIONES DE LA REVISIÓN DEL 26/09/2026
+11 pruebas backend aprobadas; Angular production compila; proxy local probado
+por HTTP. Se validó sintaxis Python, Bash, XML/YAML y transformación del compose
+oficial de Wazuh. No se ejecutaron Docker, MySQL, nftables, Nginx, Wazuh,
+SonarQube, Bearer o ZAP en VMs. Sus verificaciones siguen pendientes.
+El registro histórico y la matriz están en docs/REVISION.md. La comprobación
+de parámetros del 29/09/2026 se documenta en ACTUALIZACION_SI26_G02.txt.

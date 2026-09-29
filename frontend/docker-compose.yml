@@ -1,6 +1,11 @@
 services:
   frontend:
-    build: .
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile
+    environment:
+      BACKEND_TAILSCALE_IP: ${BACKEND_TAILSCALE_IP:?Configurar IP backend}
+      APP_PORT: ${APP_PORT:?Configurar puerto API}
     ports:
-      - "80:80"
+      - "127.0.0.1:8080:80"
     restart: unless-stopped

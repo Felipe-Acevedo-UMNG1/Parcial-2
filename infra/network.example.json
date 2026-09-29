@@ -1,0 +1,9 @@
+{
+  "db_ip": "<IP_TAILSCALE_DB>",
+  "backend_ip": "<IP_TAILSCALE_BACKEND>",
+  "frontend_ip": "<IP_TAILSCALE_FRONTEND>",
+  "security_ip": "<IP_TAILSCALE_SECURITY>",
+  "pc_ips": ["<IP_TAILSCALE_PC_ACEVEDO>", "<IP_TAILSCALE_PC_PEREZ>", "<IP_TAILSCALE_PC_VELANDIA>"],
+  "app_port": 8102,
+  "db_port": 33062
+}

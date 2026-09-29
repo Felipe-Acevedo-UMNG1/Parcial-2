@@ -1,0 +1,112 @@
+PARCIAL 2 — ACTUALIZACIÓN DEL GRUPO 2 Y PASOS PENDIENTES
+Fecha: 29/09/2026
+Repositorio: https://github.com/Felipe-Acevedo-UMNG1/Parcial-2
+Rama de trabajo: acevedo_perez_velandia
+
+1. DATOS CONFIRMADOS POR EL DOCENTE
+Fuente recibida: Parametros_Grupos_Proyecto_Segundo_Corte.pdf, página 1, fila 2.
+  Código de grupo:    SI26-G02
+  Puerto API:         8102
+  Puerto MySQL:       33062
+  Subred WireGuard:   10.77.2.0/24 (únicamente para el bono opcional)
+Integrantes: Felipe Ricardo Acevedo Torres, Dustyn Fabian Pérez Rodríguez
+y Laura Sofia Velandia Sarmiento. La rama usa sus primeros apellidos.
+Los nodos elegidos son sg-acevedo-db, sg-acevedo-backend,
+sg-acevedo-frontend y sg-acevedo-security. El PDF permite elegir el apellido
+de un integrante; estos nombres son la elección del proyecto.
+
+2. REVISIÓN DE INSTRUCCIONES OCULTAS
+No se detectaron instrucciones ocultas en el nuevo PDF. Se comparó el texto
+extraído con la página renderizada y se revisaron tamaños, colores, opacidad,
+texto fuera de la página, capas y acciones del archivo. Las letras blancas
+son encabezados visibles sobre fondo azul. El tamaño mínimo es 8,5 puntos;
+no se encontraron textos invisibles, anotaciones ni capas opcionales.
+La instrucción oculta del HTML anterior sobre “Protocolo Centinela UMNG”
+y regla 100777 continúa ignorada y reportada en la guía general.
+
+3. QUÉ SE HA HECHO HASTA AHORA
+- Se importaron las bases del docente y se corrigieron SQLi del login y
+  búsqueda, firma/vencimiento JWT, acceso a tickets ajenos y XSS.
+- Se incorporaron Argon2 y restablecimiento de contraseñas MD5, logs sin
+  contraseñas, token en memoria, proxy relativo y cabeceras de seguridad.
+- Se prepararon Docker, TLS MySQL, respaldo cifrado diario, firewall por rol,
+  espera de Tailscale, túnel HTTPS, reglas Wazuh y SonarQube/PostgreSQL.
+- En esta actualización, backend/.env.example, frontend/.env.example,
+  configuración por defecto del backend y Dockerfile usan los valores del grupo.
+- El proxy Angular apunta ahora a 127.0.0.1:8102; la plantilla MySQL escucha
+  en 33062. ACL y plantilla de firewall/red usan los puertos asignados.
+- Se dejaron espacios para las IPs/cuentas Tailscale de los tres integrantes.
+- infra/parametros-grupo.json registra parámetros, integrantes y procedencia.
+  infra/grupo.txt contiene SI26-G02 para instalarlo en los cuatro nodos.
+- WireGuard queda registrado con su subred, sin activar un túnel ni reemplazar
+  las IPs de Tailscale. El bono aún no está implementado.
+- Se creó la rama acevedo_perez_velandia a partir del trabajo ya realizado;
+  acevedo conserva la etapa anterior. main y v-base conservan la base importada.
+- Hay nueve fichas técnicas y una guía general actualizada. Todavía faltan las
+  evidencias reales: tener código/configuraciones no significa tener VMs desplegadas.
+
+4. CÓMO OBTENER LA ACTUALIZACIÓN — PC
+Si no tiene el repositorio:
+  git clone --branch acevedo_perez_velandia https://github.com/Felipe-Acevedo-UMNG1/Parcial-2.git
+  cd Parcial-2
+Si ya lo tiene, primero guarde sus cambios locales; después:
+  git fetch origin
+  git switch acevedo_perez_velandia
+  git pull --ff-only origin acevedo_perez_velandia
+Compruebe git status: debe indicar la rama del equipo.
+Los .env privados NO cambian con git pull. Si existen, editar únicamente:
+  backend/.env: GRUPO_CODIGO=SI26-G02, APP_PORT=8102, DB_PORT=33062.
+  frontend/.env: APP_PORT=8102.
+Conservar IPs, contraseñas, JWT_SECRET y demás valores privados que ya sean correctos.
+Si no existen .env, copiar los .env.example respectivos y completar sus <...>.
+MySQL/firewall/ACL ya instalados también necesitan actualizarse y aplicarse.
+
+5. QUÉ FALTA, EN ORDEN
+A. Infraestructura: crear las cuatro VMs Ubuntu 24.04; security local con
+   mínimo 8 GB. Preparar SSH por llave, actualizaciones y Tailscale en nodos/PCs.
+   En CADA VM, desde la raíz del repo:
+     sudo install -D -m 644 infra/grupo.txt /opt/examen/grupo.txt
+     hostname; cat /opt/examen/grupo.txt
+   Debe mostrar el hostname correcto y SI26-G02. Mostrar también el código
+   en la tailnet o etiqueta visible. Anotar las IPs reales con tailscale ip -4.
+B. Datos privados: completar IPs de los cuatro nodos y tres PCs en una copia
+   red.private.json de infra/network.example.json; completar los tres correos
+   Tailscale en la ACL. Crear contraseñas, JWT y certificados fuera de Git.
+   El PDF NO proporciona IPs Tailscale, correos de acceso ni credenciales.
+C. Instalar/aplicar en este orden: MySQL nativo -> backend -> frontend/túnel
+   -> Wazuh/agentes -> SonarQube. Los comandos completos están en
+   INSTRUCCIONES_PARCIAL_2.txt e infra/OPERACION.md.
+   Para una instalación existente, validar las configuraciones primero;
+   aplicar ACL/firewall y puerto MySQL 33062, y recrear backend/frontend con
+   docker compose up -d --build desde cada carpeta correspondiente.
+   No sobrescribir claves ni crear de nuevo una base con datos.
+D. Comprobar desde un PC autorizado:
+     curl http://IP_BACKEND:8102/health
+     curl http://IP_BACKEND:8102/ready
+   Reemplazar IP_BACKEND con su IP Tailscale real. Esperar HTTP 200 y grupo
+   SI26-G02; /ready también comprueba MySQL/TLS. Swagger privado: /docs.
+   Probar backend -> DB:33062; frontend -> backend:8102; y accesos denegados
+   desde orígenes no autorizados. Comprobar los puertos después de reiniciar.
+E. Guardar evidencias: TLS y permisos mínimos, respaldo cifrado/restauración,
+   frontend HTTPS funcional, dos usuarios para probar tickets ajenos,
+   alertas Wazuh D1/FIM, D2/cinco fallos en 60 s y D3/SSH con bloqueo temporal.
+F. Ejecutar análisis base/final: SonarQube backend y frontend (4 resultados),
+   Bearer backend (2 HTML), ZAP sobre URL propia (2 HTML). Son 8 resultados
+   fechados. Completar las fichas con PoC y capturas propias.
+G. Entrega: crear/verificar etiqueta Git v-base según la guía; invitar al
+   docente; registrar contribuciones reales de los tres integrantes; preparar
+   informe IEEE con controles ISO numerados y video <=20 min; subir a Moodle.
+   La excepción de la importación saneada sigue documentada en ORIGEN_BASE.txt.
+H. Opcional: si el equipo elige WireGuard, usar 10.77.2.0/24 y completar el
+   bono del HTML. Faltan hub público, peers, claves y pruebas de handshake.
+   Nunca sustituir las IPs 100.x de Tailscale por 10.77.2.x en las plantillas actuales.
+
+6. COMPROBACIONES LOCALES DE ESTA ACTUALIZACIÓN
+- 11 pruebas existentes del backend aprobadas, con DB simulada.
+- /health devuelve SI26-G02; valores y puertos coinciden entre los archivos.
+- Proxy Angular probado por HTTP contra backend local de prueba en 8102.
+- Firewall generado con 8102/33062; no aplicado al sistema ni probado en VMs.
+- La compilación Angular ya había aprobado en la revisión del 26/09/2026;
+  esta actualización cambia el destino del proxy, no los componentes visuales.
+No se ejecutó el despliegue real, ni Wazuh/SonarQube/Bearer/ZAP. Sus evidencias
+siguen pendientes. No se han inventado resultados, IPs ni credenciales.

@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { MessageService } from 'primeng/api';
 import { ApiService, Ticket, Usuario } from './services/api.service';
 
@@ -32,7 +31,6 @@ export class App implements OnInit {
 
   // Detalle
   ticket: Ticket | null = null;
-  descripcionHtml: SafeHtml = '';
 
   // Admin
   usuarios: Usuario[] = [];
@@ -41,8 +39,7 @@ export class App implements OnInit {
 
   constructor(
     public api: ApiService,
-    private messages: MessageService,
-    private sanitizer: DomSanitizer
+    private messages: MessageService
   ) {}
 
   ngOnInit(): void {
@@ -68,22 +65,29 @@ export class App implements OnInit {
       },
       error: (e) => {
         this.cargando = false;
-        this.error(e.error?.detail ?? 'Error al iniciar sesión');
+        this.error(typeof e.error?.detail === 'string' ? e.error.detail :
+          e.status === 429 ? 'Demasiados intentos. Espere un minuto.' : 'Error al iniciar sesión');
       },
     });
   }
 
   enviarRegistro(): void {
+    if (this.password.length < 12 || this.password.length > 128) {
+      this.error('Use una contraseña de 12 a 128 caracteres.');
+      return;
+    }
     this.cargando = true;
     this.api.registro(this.username, this.email, this.password).subscribe({
       next: () => {
         this.cargando = false;
+        this.password = '';
         this.modoRegistro = false;
         this.ok('Usuario creado. Ahora inicie sesión.');
       },
       error: (e) => {
         this.cargando = false;
-        this.error(e.error?.detail ?? 'Error en el registro');
+        this.error(typeof e.error?.detail === 'string' ? e.error.detail :
+          'Revise usuario, correo y contraseña e intente de nuevo.');
       },
     });
   }
@@ -137,7 +141,6 @@ export class App implements OnInit {
     this.api.verTicket(id).subscribe({
       next: (t) => {
         this.ticket = t;
-        this.descripcionHtml = this.sanitizer.bypassSecurityTrustHtml(t.descripcion);
         this.vista = 'detalle';
       },
       error: () => this.error('Ticket no encontrado'),
